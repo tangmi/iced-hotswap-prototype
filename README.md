@@ -1,5 +1,7 @@
 # iced layout markup language & hotswap test
 
+`cargo run`
+
 ## todo:
 
 - [x] Templated layout engine
