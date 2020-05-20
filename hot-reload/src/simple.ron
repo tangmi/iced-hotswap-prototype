@@ -1,7 +1,6 @@
 (
     root: Column([
         Text("try editing me in `./src/simple.ron`!"),
-        Text("mouse over the app after saving!"),
         Text("|"),
         {{ #unless clicked }}
             Text("hello"),
@@ -24,6 +23,5 @@
             ),
             callback_name: "TestarooTwo",
         ),
-
     ]),
 )

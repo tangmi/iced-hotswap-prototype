@@ -21,9 +21,15 @@ enum Message {
     TestarooTwo(f32),
 }
 
+#[derive(Debug, Copy, Clone)]
+enum AppMessage {
+    UserMessage(Message),
+    PollFileChanges(std::time::Instant),
+}
+
 impl iced::Application for HotswapTest {
     type Executor = iced::executor::Default;
-    type Message = Message;
+    type Message = AppMessage;
     type Flags = ();
 
     fn new(_flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
@@ -44,12 +50,17 @@ impl iced::Application for HotswapTest {
 
     fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
         match message {
-            Message::Testaroo => {
-                self.hotswappo.state().clicked = !self.hotswappo.state().clicked;
-            }
-            Message::TestarooTwo(val) => {
-                self.hotswappo.state().some_message = format!("{}", val);
-                self.hotswappo.state().slider_val = val;
+            AppMessage::UserMessage(message) => match message {
+                Message::Testaroo => {
+                    self.hotswappo.state().clicked = !self.hotswappo.state().clicked;
+                }
+                Message::TestarooTwo(val) => {
+                    self.hotswappo.state().some_message = format!("{}", val);
+                    self.hotswappo.state().slider_val = val;
+                }
+            },
+            AppMessage::PollFileChanges(_) => {
+                // no-op
             }
         }
 
@@ -57,11 +68,17 @@ impl iced::Application for HotswapTest {
     }
 
     fn view(&mut self) -> iced::Element<Self::Message> {
-        self.hotswappo.get().unwrap().view()
+        self.hotswappo
+            .get()
+            .unwrap()
+            .view::<Message>()
+            .map(AppMessage::UserMessage)
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        self.hotswappo.subscription()
+        self.hotswappo
+            .subscription()
+            .map(AppMessage::PollFileChanges)
     }
 }
 
@@ -97,9 +114,10 @@ impl Hotswappo {
         }
     }
 
-    pub fn subscription<M>(&self) -> iced::Subscription<M> {
+    pub fn subscription(&self) -> iced::Subscription<std::time::Instant> {
+        // Wake the app every 500 milliseconds to force a rerender and pick up file changes.
         // TODO listen to file update events
-        iced::Subscription::none()
+        iced::Subscription::from_recipe(Every(std::time::Duration::from_millis(500)))
     }
 
     pub fn state(&mut self) -> &mut State {
@@ -124,5 +142,30 @@ impl Hotswappo {
         }
 
         Ok(self.layout.as_mut().unwrap())
+    }
+}
+
+struct Every(std::time::Duration);
+
+impl<H, I> iced_native::subscription::Recipe<H, I> for Every
+where
+    H: std::hash::Hasher,
+{
+    type Output = std::time::Instant;
+
+    fn hash(&self, state: &mut H) {
+        use std::hash::Hash;
+        std::any::TypeId::of::<Self>().hash(state);
+    }
+
+    fn stream(
+        self: Box<Self>,
+        _input: futures::stream::BoxStream<'static, I>,
+    ) -> futures::stream::BoxStream<'static, Self::Output> {
+        use futures::stream::StreamExt;
+
+        async_std::stream::interval(self.0)
+            .map(|_| std::time::Instant::now())
+            .boxed()
     }
 }

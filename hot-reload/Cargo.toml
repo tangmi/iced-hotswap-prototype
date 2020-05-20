@@ -6,6 +6,9 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
+iced_native = "0.2"
+async-std = { version = "1", features = ["unstable"] }
+futures = "0.3"
 
 [dependencies.iml]
 path = "../iml"
