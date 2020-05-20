@@ -130,6 +130,7 @@ impl<S: Serialize> ImlFile<S> {
         element: &'a Element,
         id: String,
     ) -> iced::Element<'a, M> {
+        // TODO find a way to discover and handle custom widgets?
         match element {
             Element::Column(children) => {
                 // Explicit for loop b/c I don't know how to make lifetimes work with closures
