@@ -1,0 +1,19 @@
+[package]
+name = "iced-hot-reload"
+version = "0.1.0"
+authors = ["Michael Tang <tangmi@uw.edu>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+
+[dependencies.iml]
+path = "../iml"
+
+[dependencies.iced]
+version = "0.1"
+features = ["debug"]
+
+[dependencies.serde]
+version = "1"
+features = ["derive"]

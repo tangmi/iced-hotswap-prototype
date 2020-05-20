@@ -1,0 +1,25 @@
+(
+    root: Column([
+        {{ #unless clicked }}
+            Text("hello"),
+        {{ else }}
+            Text("buh bye"),
+        {{ /unless }}
+        Text("world {{ some_message }}"),
+        Row([
+            Text("button"),
+            Button(
+                content: Text("button"),
+                callback_name: "Testaroo",
+            ),
+        ]),
+        Slider(
+            value_name: "slider_val",
+            range: (
+                start: 0,
+                end: 100,
+            ),
+            callback_name: "TestarooTwo",
+        ),
+    ]),
+)
