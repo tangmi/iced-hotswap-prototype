@@ -67,11 +67,8 @@ pub struct ImlFile<S: Serialize> {
     templated_source: String,
     layout: Option<Root>,
 
-    /// maps to `Fn(..) -> Message`
-    names_to_callbacks: std::collections::HashMap<String, Box<dyn std::any::Any>>,
-    states: std::cell::RefCell<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
-
     user_state: S,
+    widget_states: std::cell::RefCell<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
 }
 
 impl<S: Serialize> ImlFile<S> {
@@ -86,9 +83,8 @@ impl<S: Serialize> ImlFile<S> {
             templated_source,
             layout: None,
 
-            names_to_callbacks: std::collections::HashMap::new(),
-            states: std::cell::RefCell::new(std::collections::HashMap::new()),
             user_state: initial_user_state,
+            widget_states: std::cell::RefCell::new(std::collections::HashMap::new()),
         })
     }
 
@@ -113,16 +109,14 @@ impl<S: Serialize> ImlFile<S> {
         self.layout = Some(ron::de::from_str(&source).expect("resolved templeate parsed"));
 
         Self::get_iced_element(
-            &self.names_to_callbacks,
             &self.user_state,
-            &self.states,
+            &self.widget_states,
             &self.layout.as_ref().expect("just set this field").root,
             "root".to_owned(),
         )
     }
 
     fn get_iced_element<'a, M: 'static + Copy + Clone + Deserialize<'a>>(
-        names_to_callbacks: &std::collections::HashMap<String, Box<dyn std::any::Any>>,
         user_state: &S,
         widget_states: &'a std::cell::RefCell<
             std::collections::HashMap<String, Box<dyn std::any::Any>>,
@@ -138,7 +132,6 @@ impl<S: Serialize> ImlFile<S> {
                 for (i, child) in children.iter().enumerate() {
                     children_elements.push(
                         Self::get_iced_element(
-                            names_to_callbacks,
                             user_state,
                             widget_states,
                             child,
@@ -156,7 +149,6 @@ impl<S: Serialize> ImlFile<S> {
                 for (i, child) in children.iter().enumerate() {
                     children_elements.push(
                         Self::get_iced_element(
-                            names_to_callbacks,
                             user_state,
                             widget_states,
                             child,
@@ -178,13 +170,7 @@ impl<S: Serialize> ImlFile<S> {
                 let id = format!("{}.button", id);
                 iced::button::Button::new(
                     Self::create_or_get_widget_state(widget_states, &id),
-                    Self::get_iced_element(
-                        names_to_callbacks,
-                        user_state,
-                        widget_states,
-                        content,
-                        id,
-                    ),
+                    Self::get_iced_element(user_state, widget_states, content, id),
                 )
                 .on_press(ron::de::from_str(callback_name).unwrap())
                 .into()
